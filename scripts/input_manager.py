@@ -36,7 +36,7 @@ class InputManager():
         self.dataset = TFRecordDataset( datafile , "GZIP" )
         self.dataset = self.dataset.map(  self._parse_sample )
         self.dataset = self.dataset.repeat()
-        self.dataset = self.dataset.shuffle(buffer_size=batch_size*3)
+        self.dataset = self.dataset.shuffle(buffer_size=batch_size*30)
 
         self.data = self.dataset.batch( batch_size )
 

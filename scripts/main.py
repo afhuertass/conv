@@ -8,14 +8,14 @@ import input_manager as input_manager
 import cnnmodel as model
 
 
-model_dir = "../model_output"
-tb_dir = "../model_output/tensorboard"
-total_steps = 100000
+model_dir = "../model_output/wganset"
+tb_dir = "../model_output/wganset/tensorboard"
+total_steps =200000
 check_interval = 100
 batch_size = 64 
-datam = input_manager.InputManager("../data/tf_full_norm.pb2" , batch_size, 1  )
+datam = input_manager.InputManager("../data/wgan_set.pb2" , batch_size, 1  )
 
-cnn = model.cnn_model()
+cnn = model.cnn_model( batch_size )
 
 iterator = datam.iterator()
 
@@ -29,8 +29,8 @@ global_step = tf.get_variable(
         trainable = False ,
         collections = [ tf.GraphKeys.GLOBAL_VARIABLES , tf.GraphKeys.GLOBAL_STEP]
 )
-
-cnn.build( input_tensors , global_step  )
+# banda1 y etiquetas 
+cnn.build( input_tensors[0] , input_tensors[2] , global_step  )
 
 config = tf.ConfigProto()
 config.gpu_options.allow_growth=True
@@ -48,12 +48,13 @@ with tf.train.SingularMonitoredSession( hooks = hooks , checkpoint_dir = model_d
 
     sess.run( iterator.initializer )
     start_step = sess.run( global_step )
-
+    label = sess.run ( input_tensors[2] )
+    print(label)
     try:
 
         cnn.train( start_step , total_steps , sess, tb_dir )
 
-    except tf.error.OutOfRangeError:
+    except tf.errors.OutOfRangeError:
 
         print("data set agotado")
 

@@ -3,19 +3,19 @@ import tensorflow as tf
 class cnn_model():
 
 
-    def __init__(self ):
+    def __init__(self , mb_size ):
 
 
         self.dropout = 0.2
+        self.mb_size = mb_size
         
         return 
-    def build(self ,inputs   , global_step ):
+    def build(self ,inputs , labels   , global_step ):
         # build cnn
-        labels = inputs[2]
-        inputs = self.build_bands( inputs[0] , inputs[1] )
-        
-        labels = tf.reshape( labels , [-1 , 1 ] ) 
-        inputs = tf.reshape( inputs , [-1 , 75 , 75 , 2 ] )
+        #inputs = self.build_bands( inputs[0] , inputs[1] )
+        print( inputs.shape ) 
+        inputs = tf.reshape( inputs , [self.mb_size , 75 , 75 , 1  ] )
+        labels = tf.reshape( labels , [ self.mb_size , 1 ] ) 
         # input [-1 , 75 , 75 , 2 ]
         conv1 = tf.layers.conv2d(
             inputs = inputs ,
@@ -24,7 +24,7 @@ class cnn_model():
             strides = [5,5] ,
             padding = 'same'
         )
-
+    
         conv1 = tf.layers.batch_normalization(conv1)
         conv1 = tf.layers.dropout(conv1 , self.dropout )
         # conv1 [-1 , 15,15,8]
@@ -47,12 +47,13 @@ class cnn_model():
             activation  = tf.nn.relu 
         )
 
-        out = tf.sigmoid( logits )
+        out = tf.sigmoid( logits ) 
 
         self.loss = tf.losses.log_loss(
-            predictions = logits , labels = labels 
+            predictions = logits + 1e-8  , labels = labels 
         )
 
+        
         self.train_op = tf.train.AdamOptimizer(
             learning_rate = 1e-6
         ).minimize( self.loss , global_step = global_step   )
@@ -61,15 +62,6 @@ class cnn_model():
 
         self.build_merge()
     
-    def build_bands(self , band1 , band2 ):
-
-        band1 = tf.reshape( band1  , [-1 ,  75 , 75 ] )
-        band2 =  tf.reshape( band2  , [-1 ,  75 , 75 ] )
-        
-        inputs = tf.stack( [band1 , band2] , axis = -1 )
-        inputs = tf.reshape( inputs , [-1 , 75,75 , 2  ])
-
-        return inputs 
 
     def train(self , start_step ,epochs , sess,  tb_dir  ):
 
@@ -97,6 +89,11 @@ class cnn_model():
 
     def predict(self):
 
+
         return
+
+    def new_loss(self , logits , targets ) :
+
+        return -tf.reduce_sum( targets * tf.log( logits + 1e-10))
     
         
